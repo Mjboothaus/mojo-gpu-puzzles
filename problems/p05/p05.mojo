@@ -1,13 +1,13 @@
-from memory import UnsafePointer
+# from memory import UnsafePointer
 from gpu import thread_idx, block_dim, block_idx
 from gpu.host import DeviceContext, HostBuffer
 from testing import assert_equal
 
 # ANCHOR: broadcast_add
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn broadcast_add(
@@ -18,6 +18,8 @@ fn broadcast_add(
 ):
     row = thread_idx.y
     col = thread_idx.x
+    if row < size and col < size:
+        output[row * size + col] = a[col] + b[row]
     # FILL ME IN (roughly 2 lines)
 
 
@@ -36,6 +38,9 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i + 1
                 b_host[i] = i * 10
+
+            print(a_host)
+            print(b_host)
 
             for i in range(SIZE):
                 for j in range(SIZE):

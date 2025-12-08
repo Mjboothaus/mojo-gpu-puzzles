@@ -4,10 +4,10 @@ from gpu.host import DeviceContext
 from testing import assert_equal
 
 # ANCHOR: add_10_guard
-alias SIZE = 4
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (8, 1)
-alias dtype = DType.float32
+comptime SIZE = 4
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (8, 1)
+comptime dtype = DType.float32
 
 
 fn add_10_guard(
@@ -16,6 +16,8 @@ fn add_10_guard(
     size: UInt,
 ):
     i = thread_idx.x
+    if i < size:
+        output[i] = a[i] + 10.0
     # FILL ME IN (roughly 2 lines)
 
 

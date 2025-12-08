@@ -1,13 +1,13 @@
-from memory import UnsafePointer
+# from memory import UnsafePointer
 from gpu import thread_idx, block_dim, block_idx
 from gpu.host import DeviceContext
 from testing import assert_equal
 
 # ANCHOR: add_10_2d
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn add_10_2d(
@@ -17,6 +17,8 @@ fn add_10_2d(
 ):
     row = thread_idx.y
     col = thread_idx.x
+    if row < size and col < size:
+        output[row * size + col] = a[row * size + col] + 10.0
     # FILL ME IN (roughly 2 lines)
 
 
