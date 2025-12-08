@@ -30,7 +30,7 @@ IGNORE_LOW_COMPUTE_FAILURES=false
 
 # Puzzles that require higher compute capability on NVIDIA
 # >= 8.0 (Ampere): Tensor Cores, full async copy (RTX 30xx, A100+)
-NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33")
+NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p22" "p28" "p29" "p33")
 # >= 9.0 (Hopper): SM90+ cluster programming (H100+)
 NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
@@ -87,7 +87,7 @@ detect_gpu_compute_capability() {
             # Check for known GPU families and their compute capabilities
             if echo "$gpu_name" | grep -qi "H100"; then
                 compute_capability="9.0"
-            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4"; then
+            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4\|RTX 2000 Ada Generation"; then
                 compute_capability="8.9"
             elif echo "$gpu_name" | grep -qi "RTX 30[0-9][0-9]\|RTX 3090\|RTX 3080\|RTX 3070\|RTX 3060\|A40\|A30\|A10"; then
                 compute_capability="8.6"
@@ -465,7 +465,8 @@ run_python_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'sys\.argv\[1\] == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
+        # Support both sys.argv[1] == "--flag" and argparse add_argument("--flag", ...) patterns
+        flags=$(grep -oE 'sys\.argv\[1\] == "--[^"]*"|"--[a-z-]+"' "$f" | grep -oE -- '--[a-z-]+' | sort -u | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "python \"$f\""
