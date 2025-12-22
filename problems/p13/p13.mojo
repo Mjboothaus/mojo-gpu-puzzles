@@ -28,6 +28,30 @@ fn conv_1d_simple[
     local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 14 lines)
 
+    shared_a = tb[dtype]().row_major[SIZE]().shared().alloc()
+    shared_b = tb[dtype]().row_major[SIZE]().shared().alloc()
+
+    if local_i < SIZE:
+        shared_a[local_i] = a[global_i]
+    else:
+        shared_a[local_i] = 0.0
+
+    if local_i < CONV:
+        shared_b[local_i] = b[global_i]
+    else:
+        shared_b[local_i] = 0.0
+
+    barrier()
+
+
+    for i in range(SIZE):
+        for j in range(CONV):
+            if i + j < SIZE:
+                output[i] += shared_a[i + j] * shared_b[j]
+
+    if global_i < SIZE:
+        output[global_i] = sh
+
 
 # ANCHOR_END: conv_1d_simple
 
