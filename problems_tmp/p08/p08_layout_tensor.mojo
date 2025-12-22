@@ -1,26 +1,27 @@
+# from memory import UnsafePointer - NOT USED
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from testing import assert_equal
 
-# ANCHOR: pooling_layout_tensor
-comptime TPB = 8
+# ANCHOR: add_10_shared_layout_tensor
+comptime TPB = 4
 comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (1, 1)
+comptime BLOCKS_PER_GRID = (2, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn pooling[
+fn add_10_shared_layout_tensor[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    # Allocate shared memory using tensor builder
+    # Allocate shared memory using LayoutTensor with explicit address_space
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
@@ -30,10 +31,18 @@ fn pooling[
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # FIX ME IN (roughly 10 lines)
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+
+    barrier()
+
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10.0
+    # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: pooling_layout_tensor
+# ANCHOR_END: add_10_shared_layout_tensor
 
 
 def main():
@@ -41,16 +50,13 @@ def main():
         out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a.enqueue_fill(0)
-
-        with a.map_to_host() as a_host:
-            for i in range(SIZE):
-                a_host[i] = i
+        a.enqueue_fill(1)
 
         out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
 
-        ctx.enqueue_function_checked[pooling[layout], pooling[layout]](
+        comptime kernel = add_10_shared_layout_tensor[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
             UInt(SIZE),
@@ -59,16 +65,8 @@ def main():
         )
 
         expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
-        expected.enqueue_fill(0)
+        expected.enqueue_fill(11)
         ctx.synchronize()
-
-        with a.map_to_host() as a_host:
-            ptr = a_host
-            for i in range(SIZE):
-                s = Scalar[dtype](0)
-                for j in range(max(i - 2, 0), i + 1):
-                    s += ptr[j]
-                expected[i] = s
 
         with out.map_to_host() as out_host:
             print("out:", out_host)

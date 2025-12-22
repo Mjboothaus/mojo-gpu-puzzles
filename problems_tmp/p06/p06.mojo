@@ -1,34 +1,27 @@
-from memory import UnsafePointer, stack_allocation
-from gpu import thread_idx, block_idx, block_dim, barrier
+# from memory import UnsafePointer
+from gpu import thread_idx, block_idx, block_dim
 from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
-from sys import size_of
 from testing import assert_equal
 
-# ANCHOR: pooling
-comptime TPB = 8
-comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
+# ANCHOR: add_10_blocks
+comptime SIZE = 9
+comptime BLOCKS_PER_GRID = (3, 1)
+comptime THREADS_PER_BLOCK = (4, 1)
 comptime dtype = DType.float32
 
 
-fn pooling(
+fn add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space = AddressSpace.SHARED,
-    ]()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    # FILL ME IN (roughly 10 lines)
+    i = block_dim.x * block_idx.x + thread_idx.x
+    if i < size:
+        output[i] = a[i] + 10.0
+    # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: pooling
+# ANCHOR_END: add_10_blocks
 
 
 def main():
@@ -41,7 +34,7 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        ctx.enqueue_function_checked[pooling, pooling](
+        ctx.enqueue_function_checked[add_10_blocks, add_10_blocks](
             out,
             a,
             UInt(SIZE),
@@ -54,14 +47,8 @@ def main():
 
         ctx.synchronize()
 
-        with a.map_to_host() as a_host:
-            ptr = a_host
-            for i in range(SIZE):
-                s = Scalar[dtype](0)
-                for j in range(max(i - 2, 0), i + 1):
-                    s += ptr[j]
-
-                expected[i] = s
+        for i in range(SIZE):
+            expected[i] = i + 10
 
         with out.map_to_host() as out_host:
             print("out:", out_host)
