@@ -43,14 +43,13 @@ fn conv_1d_simple[
 
     barrier()
 
-
     for i in range(SIZE):
         for j in range(CONV):
             if i + j < SIZE:
                 output[i] += shared_a[i + j] * shared_b[j]
 
     if global_i < SIZE:
-        output[global_i] = sh
+        output[global_i] = shared[local_i]
 
 
 # ANCHOR_END: conv_1d_simple
