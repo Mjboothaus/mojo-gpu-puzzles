@@ -16,7 +16,7 @@ fn add(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
-    output[i] = a[i] + b[i]
+    output[i] = a[i] + b[i]  # <- ✅ Solution code (one line)
     # FILL ME IN (roughly 1 line)
 
 

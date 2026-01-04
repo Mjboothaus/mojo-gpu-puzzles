@@ -1,4 +1,4 @@
-from memory import UnsafePointer
+# from memory import UnsafePointer
 from gpu import thread_idx
 from gpu.host import DeviceContext
 from testing import assert_equal
@@ -17,7 +17,7 @@ fn add_10_guard(
 ):
     i = thread_idx.x
     if i < size:
-        output[i] = a[i] + 10.0
+        output[i] = a[i] + 10.0  # <- ✅ Solution code (two lines)
     # FILL ME IN (roughly 2 lines)
 
 
