@@ -1,4 +1,4 @@
-from memory import UnsafePointer
+# from memory import UnsafePointer - NOT USED
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -37,6 +37,8 @@ fn add_10_shared_layout_tensor[
 
     barrier()
 
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10.0
     # FILL ME IN (roughly 2 lines)
 
 

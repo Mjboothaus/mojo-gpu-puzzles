@@ -1,4 +1,4 @@
-from memory import UnsafePointer, stack_allocation
+from memory import stack_allocation
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -19,8 +19,26 @@ fn dot_product(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    # FILL ME IN (roughly 13 lines)
-    ...
+    shared = stack_allocation[
+        TPB,
+        Scalar[dtype],
+        address_space = AddressSpace.SHARED,
+    ]()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    if global_i < size:
+        shared[local_i] = a[global_i] * b[global_i]
+    barrier()
+
+    stride = UInt(TPB) // 2
+    while stride > 0:
+        if local_i < stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+    output[0] = shared[0]
+    # FILL ME IN (roughly 10 lines)
 
 
 # ANCHOR_END: dot_product

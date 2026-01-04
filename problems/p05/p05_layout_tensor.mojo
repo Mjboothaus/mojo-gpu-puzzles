@@ -25,6 +25,8 @@ fn broadcast_add[
 ):
     row = thread_idx.y
     col = thread_idx.x
+    if row < size and col < size:
+        output[row, col] = a[0, col] + b[row, 0]
     # FILL ME IN (roughly 2 lines)
 
 
@@ -67,8 +69,6 @@ def main():
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
-
-        ctx.synchronize()
 
         with out_buf.map_to_host() as out_buf_host:
             print("out:", out_buf_host)

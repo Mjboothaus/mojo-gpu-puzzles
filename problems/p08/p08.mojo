@@ -1,4 +1,4 @@
-from memory import UnsafePointer, stack_allocation
+from memory import stack_allocation  # UnsafePointer
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -33,6 +33,8 @@ fn add_10_shared(
     # works within a thread block
     barrier()
 
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10.0
     # FILL ME IN (roughly 2 lines)
 
 
